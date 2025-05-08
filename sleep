@@ -1,0 +1,22 @@
+#include "kernel/include/types.h"
+#include "xv6-user/user.h"
+
+int main(int argc, char *argv[]) {
+    // Verifica se exatamente um argumento foi passado
+    if (argc != 2) {
+        fprintf(2, "Uso: sleep tempo\n");
+        exit(1);
+    }
+
+    // Converte o argumento para um número inteiro
+    int tempo = atoi(argv[1]);
+    // Verifica se o tempo é um número positivo
+    if (tempo <= 0) {
+        fprintf(2, "Uso: sleep tempo\ntempo deve ser um inteiro maior que 0.\n");
+        exit(1);
+    }
+
+    // Chama a função sleep com o tempo especificado
+    sleep(tempo);
+    exit(0);
+}
