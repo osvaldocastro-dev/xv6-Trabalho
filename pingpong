@@ -1,0 +1,61 @@
+#include "kernel/param.h"
+#include "kernel/types.h"
+#include "kernel/stat.h"
+#include "user/user.h"
+
+int main(int argc, char *argv[]) {
+    // Verifica se a quantidade de argumentos é válida
+    if (argc != 2) {
+        printf("ERRO: Quantidade de argumentos incorreta\n");
+        return 1;
+    }
+
+    // Obtém a quantidade de rodadas de ping pong
+    int rondas = atoi(argv[1]); // atoi converte uma string em inteiro
+
+    // Verifica se a quantidade de rodadas é válida
+    if (rondas <= 0) {
+        printf("ERRO: A quantidade de rodadas deve ser maior que 0\n");
+        exit(1);
+    }
+
+    // Inicializa os semáforos, um para o filho e outro para o pai
+    int sem_hijo = sem_en(0); // Obtém um semáforo livre para o filho
+    if (sem_hijo == -1) {
+        printf("ERRO: ao abrir o semáforo do filho\n");
+        return 1;
+    }
+
+    int sem_padre = sem_en(0); // Obtém um semáforo livre para o pai
+    if (sem_padre == -1) {
+        printf("ERRO: ao abrir o semáforo do pai\n");
+        return 1;
+    }
+
+    int pid = fork(); // Cria um novo processo
+    if (pid < 0) {
+        printf("ERRO: Falha no fork\n");
+        return 1;
+    }
+
+    // Laço para alternar entre ping e pong
+    for (unsigned int i = 0; i < rondas; ++i) {
+        if (pid == 0) { // Processo filho
+            printf("ping\n"); // Imprime ping
+            sem_up(sem_padre); // Habilita o pai
+            sem_down(sem_hijo); // Espera o pai habilitar
+        } else { // Processo pai
+            sem_down(sem_padre); // Espera o filho imprimir ping
+            printf("    pong\n"); // Imprime pong
+            sem_up(sem_hijo); // Habilita o filho
+        }
+    }
+
+    // Fecha os semáforos
+    if (pid != 0) { // O pai mata o filho
+        kill(pid);
+    }
+    sem_close(sem_hijo);
+    sem_close(sem_padre);
+    exit(0);
+}
